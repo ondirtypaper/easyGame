@@ -1,6 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Random;
 
 
@@ -11,12 +14,17 @@ public class GamePanel extends JPanel implements ActionListener {
     static final int UNIT_SIZE = 25;
     static final int GAME_UNITS = (SCREEN_WIDTH*SCREEN_HEIGHT)/UNIT_SIZE;
     static final int DELAY = 75;
-    final int x[] = new int[GAME_UNITS];
-    final int y[] = new int[GAME_UNITS];
+
+    /* Snake Bodies */
+    final int[] x = new int[GAME_UNITS];
+    final int[] y = new int[GAME_UNITS];
     int bodyParts = 6;
+
+    /* About apple */
     int applesEaten;
     int appleX;
     int appleY;
+
     char direction = 'R';
     boolean running = false;
     Timer timer;
@@ -28,18 +36,34 @@ public class GamePanel extends JPanel implements ActionListener {
         this.setBackground(Color.black);
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
+        timer = new Timer(DELAY, this);
+        timer.start();
         startGame();
     }
     public void startGame(){
         newApple();
+        applesEaten = 0;
+        // initialize snake bodies
+        bodyParts = 6;
+        for(int i = 0 ; i < bodyParts ; i++){
+            x[i] = 0;
+            y[i] = 0;
+        }
+        direction = 'R';
+        timer.restart();
+        //System.out.println("timer delay : " + timer.getDelay());
         running = true;
-        timer = new Timer(DELAY, this);
-        timer.start();
     }
     public void paintComponent(Graphics g){
         super.paintComponent(g);
         draw(g);
     }
+
+    /**
+     * 화면 출력을 위한 method
+     * PLAN : Graphics g 를 다루는 Graphic Library 클래스 생성 후 이전
+     * @param g
+     */
     public void draw(Graphics g){
 
         if(running){
@@ -48,9 +72,12 @@ public class GamePanel extends JPanel implements ActionListener {
                 g.drawLine(i*UNIT_SIZE, 0, i*UNIT_SIZE, SCREEN_HEIGHT);
                 g.drawLine(0, i*UNIT_SIZE, SCREEN_WIDTH, i*UNIT_SIZE);
             }
+            //--
+            //draw apple
             g.setColor(Color.red);
             g.fillOval(appleX,appleY, UNIT_SIZE, UNIT_SIZE);
 
+            //draw snake
             for(int i = 0 ; i < bodyParts ; i++){
                 if(i == 0) {
                     g.setColor(Color.green);
@@ -62,10 +89,10 @@ public class GamePanel extends JPanel implements ActionListener {
                     g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
                 }
             }
-            g.setColor(Color.yellow);
-            g.setFont(new Font("Ink Free",Font.BOLD,40));
-            FontMetrics metrics = getFontMetrics(g.getFont());
-            g.drawString("Score: " + applesEaten, (SCREEN_WIDTH - metrics.stringWidth("Score :"+ applesEaten))/2, 80);
+//            g.setColor(Color.yellow);
+//            g.setFont(new Font("Ink Free",Font.BOLD,40));
+//            FontMetrics metrics = getFontMetrics(g.getFont());
+//            g.drawString("Score: " + applesEaten, (SCREEN_WIDTH - metrics.stringWidth("Score :"+ applesEaten))/2, 80);
 
         } else {
             gameOver(g);
@@ -101,6 +128,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if((x[0] == appleX && y[0] == appleY)){
             bodyParts++;
             applesEaten++;
+            EasyFrame.updateScore();
             newApple();
         }
     }
@@ -124,6 +152,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if(y[0] < 0){
             running = false;
         }
+        //check if head touches bottom border
         if(y[0] > SCREEN_HEIGHT){
             running = false;
         }
@@ -142,6 +171,7 @@ public class GamePanel extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        //System.out.println("Who called action?" + e.getSource());
         if(running){
             move();
             checkApple();
@@ -149,6 +179,7 @@ public class GamePanel extends JPanel implements ActionListener {
         }
         repaint();
     }
+
     public class MyKeyAdapter extends KeyAdapter{
         @Override
         public void keyPressed(KeyEvent e){
